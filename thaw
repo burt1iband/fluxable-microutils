@@ -1,0 +1,8 @@
+#!/bin/bash
+## kills a shell process running on a given tty
+## Kills bash or whatever the default shell is.
+DFshell="$(basename ${SHELL})"
+
+TTY="tty$1"
+ps a|grep ${DFshell}|sed 's/^[ ]*//'|grep $TTY|cut -d ' ' -f1|xargs kill -9
+ exit=0

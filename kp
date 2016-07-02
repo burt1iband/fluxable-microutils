@@ -1,0 +1,86 @@
+#!/bin/bash
+## KP - Kitchen patrol for dirty apps
+## by B.H., 02/11/2015
+## Type kp application name to shutdown an application
+## using progressively more agressive methods.
+## Basically kp is a front end for the kill command, similar to,
+## but not exactly duplicating killall functionality.
+
+SELECT="tail"
+REP=0
+
+## Functions
+STOP() {
+kill -15 $PTK
+sleep 5
+OPTK=$PTK
+PTK="$(pgrep $UAP|$SELECT -n 1)"
+## Test to see if process was stopped, and if not become more agressive  
+if [[ $OPTK -eq $PTK ]]; then
+echo "$PTK does not want to die."
+kill -9 "$PTK"
+PTK="$(pgrep $UAP|$SELECT -n 1)"
+     fi
+## Check for more running app processes
+if ! [ -z $PTK ]; then
+echo "$UAP process, $PTK, is still running."
+     fi
+exit=0
+}
+
+## Parse command line options
+while getopts ":con" opt; do
+case $opt in
+c)
+echo "Clean up all $UAP processes."
+REP=1
+shift
+;;
+h)
+echo "Kp ap-name kills the newest instance of ap-name
+shutting the program down normally if possible, using a heavier hammer if not.
+
+          OPTIONS
+-c   Completely shutdown app, all detected instances
+-h   Show this message
+-o   Shutdown the oldest detected running instance of the application
+-n   Newest instance of the application is shutdown, same as default
+-t   Kill application instance on a given tty"
+shift
+;;
+o)
+SELECT=head
+shift
+;;
+n)
+SELECT=tail
+shift
+;;
+?)
+echo "$OPTARG is not a valid option."
+exit 1
+;;
+esac
+done
+
+UAP=$1
+## To integrate
+
+#TTY="tty$1"
+#ps a|grep bash|sed 's/^[ ]*//'|grep $TTY|cut -d ' ' -f1|
+
+## Show what is to be done
+PTK="$(pgrep $UAP|$SELECT -n 1)"
+echo "$UAP, process $PTK is to be killed."
+
+## Go to work
+STOP
+
+if [[ $REP -eq 0 ]]; then
+exit
+     else
+while ! [ -z $PTK ]; do
+STOP 
+done
+exit=0
+fi
